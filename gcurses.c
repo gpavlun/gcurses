@@ -143,9 +143,11 @@ void present(void){
     cursor_origin();
 
     for(int i=0; i<terminal->nrows*terminal->ncols; i++){
-        if(strcmp(terminal->term_frame[i].symbol, terminal->prev_frame[i].symbol)||strcmp(terminal->term_frame[i].color,terminal->prev_frame[i].color)){
+        if(strcmp(terminal->term_frame[i].symbol, terminal->prev_frame[i].symbol)||
+           strcmp(terminal->term_frame[i].color,terminal->prev_frame[i].color)||
+           strcmp(terminal->term_frame[i].bg_color,terminal->prev_frame[i].bg_color)){
             printf("\x1b[%d;%dH", i/terminal->ncols+1, i%terminal->ncols+1);
-            printf("\x1b[0m%s%s%s",terminal->term_frame[i].bg_color, terminal->term_frame[i].color, terminal->term_frame[i].symbol);
+            printf("%s%s%s\x1b[0m",terminal->term_frame[i].bg_color, terminal->term_frame[i].color, terminal->term_frame[i].symbol);
             //usleep(10000);
         }
     }
@@ -206,7 +208,7 @@ int horz_tiledisp(int r, int c, tile_t *source){
     term_w_t *terminal = selected_term;
 
     int i=0;
-    while(source[i].symbol!=0){
+    while(source[i].symbol[0]!=0){
         if(r>=0&&r<terminal->nrows && c>=0&&c<terminal->ncols){
             strcpy((terminal->term_frame+r*terminal->ncols + c)->symbol, source[i].symbol);
             (terminal->term_frame+r*terminal->ncols + c)->color = source[i].color;
@@ -222,7 +224,7 @@ int vert_tiledisp(int r, int c, tile_t *source){
     term_w_t *terminal = selected_term;
 
     int i=0;
-    while(source[i].symbol!=0){
+    while(source[i].symbol[0]!=0){
         if(r>=0&&r<terminal->nrows && c>=0&&c<terminal->ncols){
             strcpy((terminal->term_frame+r*terminal->ncols + c)->symbol, source[i].symbol);
             (terminal->term_frame+r*terminal->ncols + c)->color = source[i].color;

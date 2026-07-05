@@ -5,6 +5,19 @@
 
 #include "gcurses.h"
 
+void handleinput(int input, int *selected){
+    switch(input){
+        case 'w':
+            if((*selected) > 0) (*selected)--;
+            break;
+        case 's':
+            if((*selected) < 5) (*selected)++;
+            break;
+    }
+}
+
+
+
 int getch_nb(void)
 {
     unsigned char c;
@@ -28,9 +41,12 @@ int main(void) {
 
     terminal.clear();
 
+    int selected = 0;
+
     while(input!='q'&&input!='\e'){
         terminal.frame_resize();
 
+        handleinput(input, &selected);
         
         rect_t title_box;
         title_box.c = 0;
@@ -65,9 +81,48 @@ int main(void) {
         terminal.draw_frame(ui_box);
 
         terminal.horz_strdisp(ui_box.r+1,ui_box.c+1,"This is a demo of gcurses, my implementation of ncurses.");
-        terminal.vert_strdisp(body_box.r+2,body_box.c+body_box.w/2,"Vertical string");
+        //terminal.vert_strdisp(body_box.r+2,body_box.c+body_box.w/2,"Vertical string");
         terminal.horz_strdisp(ui_box.r+2,ui_box.c+1,"Dynamic resizing is enabled, try moving the window around!");
         terminal.horz_strdisp(ui_box.r+3,ui_box.c+1,"Press q or esc to exit.");
+
+        
+        tile_t array[6][16] = {0};
+
+        char set[6][16] = {
+            "option 0",
+            "option 1",
+            "option 2",
+            "option 3",
+            "option 4",
+            "option 5"
+        };
+
+
+
+        int j, i;
+        for (j=0; j<6; j++) {
+            for (i=0; set[j][i] != '\0'; i++) {
+
+                if (selected == j) {
+                    array[j][i].bg_color = GCS_BG_WHITE;
+                    array[j][i].color = GCS_BLACK;
+                } else {
+                    array[j][i].bg_color = GCS_BG_BLACK;
+                    array[j][i].color = GCS_WHITE;
+                }
+                array[j][i].symbol[0] = set[j][i];
+                array[j][i].symbol[1] = '\0';
+            }
+            array[j][i].bg_color = GCS_BG_BLACK;
+            array[j][i].color = GCS_WHITE;
+            array[j][i].symbol[0] = 0;
+
+        }
+        for(int i=0;i<6;i++){
+            terminal.horz_tiledisp(body_box.r+1+i,body_box.c+1,array[i]);
+        }
+        
+
 
         terminal.present();
         
@@ -78,5 +133,6 @@ int main(void) {
     terminal.clear();
     terminal.present();
     terminal.io_block(1);
+    
     return 0;
 }
