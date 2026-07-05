@@ -9,6 +9,52 @@
 
 #include "gcurses.h"
 
+char GCS_VAR_COLOR_BLACK[]          = "\x1b[38;5;0m";
+char GCS_VAR_COLOR_RED[]            = "\x1b[38;5;1m";
+char GCS_VAR_COLOR_GREEN[]          = "\x1b[38;5;2m";
+char GCS_VAR_COLOR_YELLOW[]         = "\x1b[38;5;3m";
+char GCS_VAR_COLOR_BLUE[]           = "\x1b[38;5;4m";
+char GCS_VAR_COLOR_MAGENTA[]        = "\x1b[38;5;5m";
+char GCS_VAR_COLOR_CYAN[]           = "\x1b[38;5;6m";
+char GCS_VAR_COLOR_WHITE[]          = "\x1b[38;5;7m";
+
+char GCS_VAR_COLOR_BRIGHT_BLACK[]   = "\x1b[38;5;8m";
+char GCS_VAR_COLOR_BRIGHT_RED[]     = "\x1b[38;5;9m";
+char GCS_VAR_COLOR_BRIGHT_GREEN[]   = "\x1b[38;5;10m";
+char GCS_VAR_COLOR_BRIGHT_YELLOW[]  = "\x1b[38;5;11m";
+char GCS_VAR_COLOR_BRIGHT_BLUE[]    = "\x1b[38;5;12m";
+char GCS_VAR_COLOR_BRIGHT_MAGENTA[] = "\x1b[38;5;13m";
+char GCS_VAR_COLOR_BRIGHT_CYAN[]    = "\x1b[38;5;14m";
+char GCS_VAR_COLOR_BRIGHT_WHITE[]   = "\x1b[38;5;15m";
+
+char GCS_VAR_COLOR_DEFAULT[]        = "\x1b[39m";
+char GCS_VAR_COLOR_RESET[]          = "\x1b[0m";
+
+char GCS_VAR_BG_COLOR_BLACK[]          = "\x1b[48;5;0m";
+char GCS_VAR_BG_COLOR_RED[]            = "\x1b[48;5;1m";
+char GCS_VAR_BG_COLOR_GREEN[]          = "\x1b[48;5;2m";
+char GCS_VAR_BG_COLOR_YELLOW[]         = "\x1b[48;5;3m";
+char GCS_VAR_BG_COLOR_BLUE[]           = "\x1b[48;5;4m";
+char GCS_VAR_BG_COLOR_MAGENTA[]        = "\x1b[48;5;5m";
+char GCS_VAR_BG_COLOR_CYAN[]           = "\x1b[48;5;6m";
+char GCS_VAR_BG_COLOR_WHITE[]          = "\x1b[48;5;7m";
+
+char GCS_VAR_BG_COLOR_BRIGHT_BLACK[]   = "\x1b[48;5;8m";
+char GCS_VAR_BG_COLOR_BRIGHT_RED[]     = "\x1b[48;5;9m";
+char GCS_VAR_BG_COLOR_BRIGHT_GREEN[]   = "\x1b[48;5;10m";
+char GCS_VAR_BG_COLOR_BRIGHT_YELLOW[]  = "\x1b[48;5;11m";
+char GCS_VAR_BG_COLOR_BRIGHT_BLUE[]    = "\x1b[48;5;12m";
+char GCS_VAR_BG_COLOR_BRIGHT_MAGENTA[] = "\x1b[48;5;13m";
+char GCS_VAR_BG_COLOR_BRIGHT_CYAN[]    = "\x1b[48;5;14m";
+char GCS_VAR_BG_COLOR_BRIGHT_WHITE[]   = "\x1b[48;5;15m";
+
+char GCS_VAR_BG_COLOR_DEFAULT[]        = "\x1b[49m";
+char GCS_VAR_BG_COLOR_RESET[]          = "\x1b[0m";
+
+
+
+
+
 term_w_t *selected_term;
 
 void select_term(term_w_t *terminal){
@@ -77,11 +123,14 @@ void clear_screen(void){
 
     term_w_t *terminal = selected_term;
 
+    puts("\x1b[2J");
+
     if(!terminal->cursor_data.hidden) hide_cursor();
 
     for(int i=0;i<terminal->ncols*terminal->nrows;i++){
             strcpy(terminal->term_frame[i].symbol, " ");
-            strcpy(terminal->term_frame[i].color,"\x1b[0m");
+            terminal->term_frame[i].color = GCS_DEFAULT;
+            terminal->term_frame[i].bg_color = GCS_BG_DEFAULT;
     }
 
     if(!terminal->cursor_data.hidden) show_cursor();
@@ -96,8 +145,8 @@ void present(void){
     for(int i=0; i<terminal->nrows*terminal->ncols; i++){
         if(strcmp(terminal->term_frame[i].symbol, terminal->prev_frame[i].symbol)||strcmp(terminal->term_frame[i].color,terminal->prev_frame[i].color)){
             printf("\x1b[%d;%dH", i/terminal->ncols+1, i%terminal->ncols+1);
-            printf("%s%s",terminal->term_frame[i].color,terminal->term_frame[i].symbol);
-            usleep(1);
+            printf("\x1b[0m%s%s%s",terminal->term_frame[i].bg_color, terminal->term_frame[i].color, terminal->term_frame[i].symbol);
+            //usleep(10000);
         }
     }
 
@@ -127,7 +176,8 @@ int horz_strdisp(int r, int c, char *source){
         if(r>=0&&r<terminal->nrows && c>=0&&c<terminal->ncols){
             (terminal->term_frame+r*terminal->ncols + c)->symbol[0] = source[i];
             (terminal->term_frame+r*terminal->ncols + c)->symbol[1] = 0;
-            strcpy((terminal->term_frame+r*terminal->ncols)->color,"\x1b[0m");
+            (terminal->term_frame+r*terminal->ncols + c)->color = GCS_DEFAULT;
+            (terminal->term_frame+r*terminal->ncols + c)->bg_color = GCS_BG_DEFAULT;
         }
         i++;
         c++;
@@ -143,7 +193,8 @@ int vert_strdisp(int r, int c, char *source){
         if(r>=0&&r<terminal->nrows && c>=0&&c<terminal->ncols){
             (terminal->term_frame+r*terminal->ncols + c)->symbol[0] = source[i];
             (terminal->term_frame+r*terminal->ncols + c)->symbol[1] = 0;
-            strcpy((terminal->term_frame+r*terminal->ncols)->color,"\x1b[0m");
+            (terminal->term_frame+r*terminal->ncols + c)->color = GCS_DEFAULT;
+            (terminal->term_frame+r*terminal->ncols + c)->bg_color = GCS_BG_DEFAULT;
         }
         i++;
         r++;
@@ -158,7 +209,8 @@ int horz_tiledisp(int r, int c, tile_t *source){
     while(source[i].symbol!=0){
         if(r>=0&&r<terminal->nrows && c>=0&&c<terminal->ncols){
             strcpy((terminal->term_frame+r*terminal->ncols + c)->symbol, source[i].symbol);
-            strcpy((terminal->term_frame+r*terminal->ncols)->color,source[i].color);
+            (terminal->term_frame+r*terminal->ncols + c)->color = source[i].color;
+            (terminal->term_frame+r*terminal->ncols + c)->bg_color = source[i].bg_color;
         }
         i++;
         c++;
@@ -173,7 +225,8 @@ int vert_tiledisp(int r, int c, tile_t *source){
     while(source[i].symbol!=0){
         if(r>=0&&r<terminal->nrows && c>=0&&c<terminal->ncols){
             strcpy((terminal->term_frame+r*terminal->ncols + c)->symbol, source[i].symbol);
-            strcpy((terminal->term_frame+r*terminal->ncols)->color,source[i].color);
+            (terminal->term_frame+r*terminal->ncols + c)->color = source[i].color;
+            (terminal->term_frame+r*terminal->ncols + c)->bg_color = source[i].bg_color;
         }
         i++;
         r++;
@@ -188,7 +241,8 @@ void draw_rect(rect_t rectangle){
     for(i=rectangle.r;i<rectangle.h+rectangle.r;i++){
         for(j=rectangle.c;j<rectangle.w+rectangle.c;j++){
             strcpy((terminal->term_frame + (i*terminal->ncols) + j)->symbol, rectangle.tile.symbol);
-            strcpy((terminal->term_frame + (i*terminal->ncols) + j)->color, rectangle.tile.color);
+            (terminal->term_frame + (i*terminal->ncols) + j)->color = rectangle.tile.color;
+            (terminal->term_frame + (i*terminal->ncols) + j)->bg_color = rectangle.tile.bg_color;
         }
     }
 }
@@ -202,11 +256,13 @@ void draw_border(rect_t rectangle){
             
             if(i==rectangle.r||i==rectangle.h+rectangle.r-1){
                 strcpy((terminal->term_frame + (i*terminal->ncols) + j)->symbol, rectangle.tile.symbol);
-                strcpy((terminal->term_frame + (i*terminal->ncols) + j)->color,rectangle.tile.color);
+                (terminal->term_frame + (i*terminal->ncols) + j)->color = rectangle.tile.color;
+                (terminal->term_frame + (i*terminal->ncols) + j)->bg_color = rectangle.tile.bg_color;
             }
             if(j==rectangle.c||j==rectangle.w+rectangle.c-1){
                 strcpy((terminal->term_frame + (i*terminal->ncols) + j)->symbol , rectangle.tile.symbol);
-                strcpy((terminal->term_frame + (i*terminal->ncols) + j)->color,rectangle.tile.color);
+                (terminal->term_frame + (i*terminal->ncols) + j)->color = rectangle.tile.color;
+                (terminal->term_frame + (i*terminal->ncols) + j)->bg_color = rectangle.tile.bg_color;
             }
         
         }
@@ -218,25 +274,36 @@ void draw_frame(rect_t rectangle){
     int i;
     
     strcpy((terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c)->symbol, "┌");
-    strcpy((terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c)->color, rectangle.tile.color);
+    (terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c)->color = rectangle.tile.color;
+    (terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c)->bg_color = rectangle.tile.bg_color;
+    
     strcpy((terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c + rectangle.w - 1)->symbol, "┐");
-    strcpy((terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c + rectangle.w - 1)->color, rectangle.tile.color);
+    (terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c + rectangle.w - 1)->color = rectangle.tile.color;
+    (terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c + rectangle.w - 1)->bg_color = rectangle.tile.bg_color;
+
     strcpy((terminal->term_frame + ((rectangle.r + rectangle.h - 1)*terminal->ncols) + rectangle.c)->symbol, "└");
-    strcpy((terminal->term_frame + ((rectangle.r + rectangle.h - 1)*terminal->ncols) + rectangle.c)->color, rectangle.tile.color);
+    (terminal->term_frame + ((rectangle.r + rectangle.h - 1)*terminal->ncols) + rectangle.c)->color = rectangle.tile.color;
+    (terminal->term_frame + ((rectangle.r + rectangle.h - 1)*terminal->ncols) + rectangle.c)->bg_color = rectangle.tile.bg_color;
+
     strcpy((terminal->term_frame + ((rectangle.r + rectangle.h - 1)*terminal->ncols) + rectangle.c + rectangle.w - 1)->symbol, "┘");
-    strcpy((terminal->term_frame + ((rectangle.r + rectangle.h - 1)*terminal->ncols) + rectangle.c + rectangle.w - 1)->color, rectangle.tile.color);
+    (terminal->term_frame + ((rectangle.r + rectangle.h - 1)*terminal->ncols) + rectangle.c + rectangle.w - 1)->color = rectangle.tile.color;
+    (terminal->term_frame + ((rectangle.r + rectangle.h - 1)*terminal->ncols) + rectangle.c + rectangle.w - 1)->bg_color = rectangle.tile.bg_color;
 
     for(i=1;i<rectangle.w-1;i++){
         strcpy((terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c + i)->symbol, "─");
-        strcpy((terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c + i)->color, rectangle.tile.color);
+        (terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c + i)->color = rectangle.tile.color;
+        (terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c + i)->bg_color = rectangle.tile.bg_color;
         strcpy((terminal->term_frame + ((rectangle.r+rectangle.h - 1)*terminal->ncols) + rectangle.c + i)->symbol, "─");
-        strcpy((terminal->term_frame + ((rectangle.r+rectangle.h - 1)*terminal->ncols) + rectangle.c + i)->color, rectangle.tile.color);
+        (terminal->term_frame + ((rectangle.r+rectangle.h - 1)*terminal->ncols) + rectangle.c + i)->color = rectangle.tile.color;
+        (terminal->term_frame + ((rectangle.r+rectangle.h - 1)*terminal->ncols) + rectangle.c + i)->bg_color = rectangle.tile.bg_color;
     }
     for(i=1;i<rectangle.h-1;i++){
         strcpy((terminal->term_frame + ((rectangle.r+i)*terminal->ncols) + rectangle.c)->symbol, "│");
-        strcpy((terminal->term_frame + ((rectangle.r+i)*terminal->ncols) + rectangle.c)->color,rectangle.tile.color);
+        (terminal->term_frame + ((rectangle.r+i)*terminal->ncols) + rectangle.c)->color = rectangle.tile.color;
+        (terminal->term_frame + ((rectangle.r+i)*terminal->ncols) + rectangle.c)->bg_color = rectangle.tile.bg_color;
         strcpy((terminal->term_frame + ((rectangle.r+i)*terminal->ncols) + rectangle.c + rectangle.w - 1)->symbol, "│");
-        strcpy((terminal->term_frame + ((rectangle.r+i)*terminal->ncols) + rectangle.c + rectangle.w - 1)->color,rectangle.tile.color);
+        (terminal->term_frame + ((rectangle.r+i)*terminal->ncols) + rectangle.c + rectangle.w - 1)->color = rectangle.tile.color;
+        (terminal->term_frame + ((rectangle.r+i)*terminal->ncols) + rectangle.c + rectangle.w - 1)->bg_color = rectangle.tile.bg_color;
     }
 
 }
@@ -255,25 +322,32 @@ void frame_resize(void){
     term_w_t *terminal = selected_term;
 
     if(detect_resize(terminal)){
-        puts("\x1b[2J");
-
         struct winsize ws;
-        ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);  
-        terminal->nrows = ws.ws_row;
-        terminal->ncols = ws.ws_col;
+
+        while(detect_resize(terminal)){
+            puts("\x1b[2J");
+            ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);  
+            terminal->nrows = ws.ws_row;
+            terminal->ncols = ws.ws_col;
+            usleep(125000);
+        }
+        
+
 
         free(terminal->term_frame);
         free(terminal->prev_frame);
         terminal->term_frame = malloc(sizeof(tile_t)*terminal->nrows*terminal->ncols);
         terminal->prev_frame = malloc(sizeof(tile_t)*terminal->nrows*terminal->ncols);
-        int i,j;
+        int i;
         for(i=0;i<terminal->nrows*terminal->ncols;i++){
             strcpy(terminal->term_frame[i].symbol, " ");
-            strcpy(terminal->term_frame[i].color, "\x1b[0m");
+            terminal->term_frame[i].color = GCS_DEFAULT;
+            terminal->term_frame[i].bg_color = GCS_BG_DEFAULT;
             strcpy(terminal->prev_frame[i].symbol, " ");
-            strcpy(terminal->term_frame[i].color, "\x1b[0m");
+            terminal->prev_frame[i].color = GCS_DEFAULT;
+            terminal->prev_frame[i].bg_color = GCS_BG_DEFAULT;
         }
-        usleep(125000);
+        
     }
 }
 
@@ -294,9 +368,11 @@ int init_tui(term_w_t *terminal){
     int i,j;
     for(i=0;i<terminal->nrows*terminal->ncols;i++){
         strcpy(terminal->term_frame[i].symbol, " ");
-        strcpy(terminal->term_frame[i].color, "\x1b[0m");
+        terminal->term_frame[i].color = GCS_DEFAULT;
+        terminal->term_frame[i].bg_color = GCS_BG_DEFAULT;
         strcpy(terminal->prev_frame[i].symbol, " ");
-        strcpy(terminal->term_frame[i].color, "\x1b[0m");
+        terminal->prev_frame[i].color = GCS_DEFAULT;
+        terminal->prev_frame[i].bg_color = GCS_BG_DEFAULT;
     }
     terminal->clear = clear_screen;
     terminal->io_block = io_blocking_handler;
@@ -323,7 +399,6 @@ int init_tui(term_w_t *terminal){
     sa.sa_sigaction = segv_handler;
     sa.sa_flags = SA_SIGINFO | SA_RESTART;
     sigaction(SIGSEGV, &sa, NULL);
-
 
     selected_term = terminal;
 

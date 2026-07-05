@@ -26,53 +26,54 @@ int main(void) {
 
     cursor_origin();
 
+    terminal.clear();
+
     while(input!='q'&&input!='\e'){
         terminal.frame_resize();
-        terminal.clear();
+
         
-        rect_t edge;
-        edge.c = 0;
-        edge.r = 0;
-        edge.h = terminal.nrows;
-        edge.w = terminal.ncols;
-        strcpy(edge.tile.color, GCS_WHITE);
-
-        terminal.draw_frame(edge);
-
         rect_t title_box;
-        title_box.c = edge.r+1;
-        title_box.r = edge.c+1;
-        title_box.h = 5;
-        title_box.w = terminal.ncols - 2;
-        strcpy(title_box.tile.color, GCS_BLUE);
+        title_box.c = 0;
+        title_box.r = 0;
+        title_box.h = 3;
+        title_box.w = terminal.ncols/4;
+        title_box.tile.color = GCS_BLUE;
+        title_box.tile.bg_color = GCS_BG_DEFAULT;
 
         terminal.draw_frame(title_box);
 
-        terminal.horz_strdisp(title_box.r+2, title_box.c+2, "GCURSES DEMO");
+        terminal.horz_strdisp(title_box.r+1, title_box.c+1, "GCURSES DEMO");
         
         rect_t body_box;
         body_box.c = title_box.c;
         body_box.r = title_box.r+title_box.h;
-        body_box.h = terminal.nrows-title_box.h-2;
-        body_box.w = terminal.ncols - 2;
-        strcpy(body_box.tile.color, GCS_RED);
+        body_box.h = terminal.nrows-title_box.h;
+        body_box.w = terminal.ncols/4;
+        body_box.tile.color = GCS_RED;
+        body_box.tile.bg_color = GCS_BG_DEFAULT;
+
         terminal.draw_frame(body_box);
 
-        terminal.horz_strdisp(body_box.r+2,body_box.c+2,"This is a demo of gcurses, my implementation of ncurses.");
-        terminal.vert_strdisp(body_box.r+4,body_box.c+4,"Vertical string");
-        terminal.horz_strdisp(body_box.r+4,body_box.c+8,"Dynamic resizing is enabled, try moving the window around!");
-        terminal.horz_strdisp(body_box.r+6,body_box.c+8,"Press q or esc to exit.");
+        rect_t ui_box;
+        ui_box.c = title_box.c+title_box.w;
+        ui_box.r = title_box.r;
+        ui_box.h = terminal.nrows;
+        ui_box.w = terminal.ncols*3/4;
+        ui_box.tile.color = GCS_GREEN;
+        ui_box.tile.bg_color = GCS_BG_DEFAULT;
+
+        terminal.draw_frame(ui_box);
+
+        terminal.horz_strdisp(ui_box.r+1,ui_box.c+1,"This is a demo of gcurses, my implementation of ncurses.");
+        terminal.vert_strdisp(body_box.r+2,body_box.c+body_box.w/2,"Vertical string");
+        terminal.horz_strdisp(ui_box.r+2,ui_box.c+1,"Dynamic resizing is enabled, try moving the window around!");
+        terminal.horz_strdisp(ui_box.r+3,ui_box.c+1,"Press q or esc to exit.");
 
         terminal.present();
         
         input = getch_nb();
         usleep(10000);
     }
-    input = 0;
-
-
-
-
 
     terminal.clear();
     terminal.present();

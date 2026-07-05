@@ -18,7 +18,7 @@ int terminal_rows;
 
 typedef struct tile_data{
     char symbol;
-    char color[11];
+    char color[32];
 }tile_t;
 tile_t *terminal_display;
 tile_t *prev_frame;
@@ -295,14 +295,14 @@ char move_snake(snake_t *snake, char input){
             snake->body[i].row = snake->body[i-1].row;
             snake->body[i].col = snake->body[i-1].col;  
             (terminal_display + snake->body[i].row*terminal_cols + snake->body[i].col)->symbol = '#';
-            strcpy((terminal_display + snake->body[i].row*terminal_cols + snake->body[i].col)->color,"\x1b[32m");
+            strcpy((terminal_display + snake->body[i].row*terminal_cols + snake->body[i].col)->color,"\x1b[38;5;218m");
             
         }
         
         snake->body[0].row = snake->row;
         snake->body[0].col = snake->col;
         (terminal_display + snake->body[0].row*terminal_cols + snake->body[0].col)->symbol = '#';
-        strcpy((terminal_display + snake->body[0].row*terminal_cols + snake->body[0].col)->color,"\x1b[32m");
+        strcpy((terminal_display + snake->body[0].row*terminal_cols + snake->body[0].col)->color,"\x1b[38;5;218m");
 
     }else{
         display_copy_h(terminal_display+2*terminal_cols+2,"You Died!");
@@ -359,7 +359,7 @@ void matrix(void){
     int i,j;
     char input = 0;
 
-    char color[11];
+    char color[32];
     int trail_set;
     int trail;
     int digit;
@@ -394,6 +394,8 @@ void matrix(void){
                     strcpy(color,"\x1b[33m");
                 $}case('w'):{
                     strcpy(color,"\x1b[37m");
+                $}case('p'):{
+                    strcpy(color,"\x1b[38;5;218m");
                 $}case('x'):{
                     strcpy(color,"\x1b[0m");
                 $}default:$

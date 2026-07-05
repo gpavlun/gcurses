@@ -4,11 +4,93 @@
 #include <stdio.h>
 #include <termios.h>
 
-#define GCS_RED "\x1b[31m"
-#define GCS_GREEN "\x1b[32m"
-#define GCS_BLUE "\x1b[34m"
-#define GCS_YELLOW "\x1b[33m"
-#define GCS_WHITE "\x1b[37m"
+
+extern char GCS_VAR_COLOR_BLACK[];
+extern char GCS_VAR_COLOR_RED[];
+extern char GCS_VAR_COLOR_GREEN[];
+extern char GCS_VAR_COLOR_YELLOW[];
+extern char GCS_VAR_COLOR_BLUE[];
+extern char GCS_VAR_COLOR_MAGENTA[];
+extern char GCS_VAR_COLOR_CYAN[];
+extern char GCS_VAR_COLOR_WHITE[];
+
+extern char GCS_VAR_COLOR_BRIGHT_BLACK[];
+extern char GCS_VAR_COLOR_BRIGHT_RED[];
+extern char GCS_VAR_COLOR_BRIGHT_GREEN[];
+extern char GCS_VAR_COLOR_BRIGHT_YELLOW[];
+extern char GCS_VAR_COLOR_BRIGHT_BLUE[];
+extern char GCS_VAR_COLOR_BRIGHT_MAGENTA[];
+extern char GCS_VAR_COLOR_BRIGHT_CYAN[];
+extern char GCS_VAR_COLOR_BRIGHT_WHITE[];
+
+extern char GCS_VAR_COLOR_DEFAULT[];
+extern char GCS_VAR_COLOR_RESET[];
+
+extern char GCS_VAR_BG_COLOR_BLACK[];
+extern char GCS_VAR_BG_COLOR_RED[];
+extern char GCS_VAR_BG_COLOR_GREEN[];
+extern char GCS_VAR_BG_COLOR_YELLOW[];
+extern char GCS_VAR_BG_COLOR_BLUE[];
+extern char GCS_VAR_BG_COLOR_MAGENTA[];
+extern char GCS_VAR_BG_COLOR_CYAN[];
+extern char GCS_VAR_BG_COLOR_WHITE[];
+
+extern char GCS_VAR_BG_COLOR_BRIGHT_BLACK[];
+extern char GCS_VAR_BG_COLOR_BRIGHT_RED[];
+extern char GCS_VAR_BG_COLOR_BRIGHT_GREEN[];
+extern char GCS_VAR_BG_COLOR_BRIGHT_YELLOW[];
+extern char GCS_VAR_BG_COLOR_BRIGHT_BLUE[];
+extern char GCS_VAR_BG_COLOR_BRIGHT_MAGENTA[];
+extern char GCS_VAR_BG_COLOR_BRIGHT_CYAN[];
+extern char GCS_VAR_BG_COLOR_BRIGHT_WHITE[];
+
+extern char GCS_VAR_BG_COLOR_DEFAULT[];
+extern char GCS_VAR_BG_COLOR_RESET[];
+
+
+#define GCS_BLACK              GCS_VAR_COLOR_BLACK
+#define GCS_RED                GCS_VAR_COLOR_RED
+#define GCS_GREEN              GCS_VAR_COLOR_GREEN
+#define GCS_YELLOW             GCS_VAR_COLOR_YELLOW
+#define GCS_BLUE               GCS_VAR_COLOR_BLUE
+#define GCS_MAGENTA            GCS_VAR_COLOR_MAGENTA
+#define GCS_CYAN               GCS_VAR_COLOR_CYAN
+#define GCS_WHITE              GCS_VAR_COLOR_WHITE
+
+#define GCS_BRIGHT_BLACK       GCS_VAR_COLOR_BRIGHT_BLACK
+#define GCS_BRIGHT_RED         GCS_VAR_COLOR_BRIGHT_RED
+#define GCS_BRIGHT_GREEN       GCS_VAR_COLOR_BRIGHT_GREEN
+#define GCS_BRIGHT_YELLOW      GCS_VAR_COLOR_BRIGHT_YELLOW
+#define GCS_BRIGHT_BLUE        GCS_VAR_COLOR_BRIGHT_BLUE
+#define GCS_BRIGHT_MAGENTA     GCS_VAR_COLOR_BRIGHT_MAGENTA
+#define GCS_BRIGHT_CYAN        GCS_VAR_COLOR_BRIGHT_CYAN
+#define GCS_BRIGHT_WHITE       GCS_VAR_COLOR_BRIGHT_WHITE
+
+#define GCS_DEFAULT            GCS_VAR_COLOR_DEFAULT
+#define GCS_RESET              GCS_VAR_COLOR_RESET
+
+#define GCS_BG_BLACK              GCS_VAR_BG_COLOR_BLACK
+#define GCS_BG_RED                GCS_VAR_BG_COLOR_RED
+#define GCS_BG_GREEN              GCS_VAR_BG_COLOR_GREEN
+#define GCS_BG_YELLOW             GCS_VAR_BG_COLOR_YELLOW
+#define GCS_BG_BLUE               GCS_VAR_BG_COLOR_BLUE
+#define GCS_BG_MAGENTA            GCS_VAR_BG_COLOR_MAGENTA
+#define GCS_BG_CYAN               GCS_VAR_BG_COLOR_CYAN
+#define GCS_BG_WHITE              GCS_VAR_BG_COLOR_WHITE
+
+#define GCS_BG_BRIGHT_BLACK       GCS_VAR_BG_COLOR_BRIGHT_BLACK
+#define GCS_BG_BRIGHT_RED         GCS_VAR_BG_COLOR_BRIGHT_RED
+#define GCS_BG_BRIGHT_GREEN       GCS_VAR_BG_COLOR_BRIGHT_GREEN
+#define GCS_BG_BRIGHT_YELLOW      GCS_VAR_BG_COLOR_BRIGHT_YELLOW
+#define GCS_BG_BRIGHT_BLUE        GCS_VAR_BG_COLOR_BRIGHT_BLUE
+#define GCS_BG_BRIGHT_MAGENTA     GCS_VAR_BG_COLOR_BRIGHT_MAGENTA
+#define GCS_BG_BRIGHT_CYAN        GCS_VAR_BG_COLOR_BRIGHT_CYAN
+#define GCS_BG_BRIGHT_WHITE       GCS_VAR_BG_COLOR_BRIGHT_WHITE
+
+#define GCS_BG_DEFAULT            GCS_VAR_BG_COLOR_DEFAULT
+#define GCS_BG_RESET              GCS_VAR_BG_COLOR_RESET
+
+
 
 #define cursor_origin() fputs("\033[H",    stdout);
 #define hide_cursor() fputs("\033[?25l", stdout);
@@ -21,7 +103,8 @@ typedef struct cursor_location{
 }cursor_t;
 typedef struct tile_data{
     char symbol[5];
-    char color[32];
+    char *color;
+    char *bg_color;
 }tile_t;
 typedef struct rectangle{
     int w; 
