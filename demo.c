@@ -107,8 +107,8 @@ int main(void) {
                     array[j][i].bg_color = GCS_BG_WHITE;
                     array[j][i].color = GCS_BLACK;
                 } else {
-                    array[j][i].bg_color = GCS_BG_BLACK;
-                    array[j][i].color = GCS_WHITE;
+                    array[j][i].bg_color = GCS_BG_DEFAULT;
+                    array[j][i].color = GCS_DEFAULT;
                 }
                 array[j][i].symbol[0] = set[j][i];
                 array[j][i].symbol[1] = '\0';
