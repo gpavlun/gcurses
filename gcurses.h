@@ -113,6 +113,28 @@ typedef struct rectangle{
     int c;
     tile_t tile;
 }rect_t;
+typedef struct term_frame_set{
+    void (*w)(int value);
+    void (*h)(int value);
+    void (*max_w)(int value);
+    void (*max_h)(int value);
+    void (*min_w)(int value);
+    void (*min_h)(int value);  
+}tframe_set_t;
+typedef struct term_frame_constraints{
+    int max_w;
+    int min_w;
+    int max_h;
+    int min_h;
+}tframe_con_t;
+typedef struct term_frame_data{
+    rect_t dim;
+    tframe_set_t set;
+    tframe_con_t con;
+}tframe_t;
+
+
+
 typedef struct term_window{
     int nrows;
     int ncols;
@@ -150,5 +172,11 @@ int vert_tiledisp(int r, int c, tile_t *source);
 void draw_rect(rect_t rectangle);
 void draw_border(rect_t rectangle);
 int init_tui(term_w_t *terminal);
-
+void set_frame_heigth(int value);
+void set_frame_max_width(int value);
+void set_frame_min_width(int value);
+void set_frame_max_heigth(int value);
+void set_frame_min_heigth(int value);
+int init_tframe(tframe_t *frame);
+void select_frame(tframe_t *frame);
 #endif

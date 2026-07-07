@@ -56,9 +56,14 @@ char GCS_VAR_BG_COLOR_RESET[]          = "\x1b[0m";
 
 
 term_w_t *selected_term;
+tframe_t *selected_frame;
 
 void select_term(term_w_t *terminal){
     selected_term = terminal;
+}
+
+void select_frame(tframe_t *frame){
+    selected_frame = frame;
 }
 
 static void sigint_handler(int sig){
@@ -270,42 +275,71 @@ void draw_border(rect_t rectangle){
         }
     }
 }
+
+
+void set_frame_tile(term_w_t *terminal, int r, int c,
+                    const char *symbol, char *color, char *bg_color){
+    if (r<0 || r>=terminal->nrows ||
+        c<0 || c>=terminal->ncols)
+        return;
+
+    tile_t *tile = &terminal->term_frame[r * terminal->ncols + c];
+
+    strcpy(tile->symbol, symbol);
+    tile->color = color;
+    tile->bg_color = bg_color;
+}
+
+
+
 void draw_frame(rect_t rectangle){
     term_w_t *terminal = selected_term;
 
+    if (!terminal || !terminal->term_frame) return;
+    if (rectangle.w < 2 || rectangle.h < 2) return;
+
+
+
     int i;
     
-    strcpy((terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c)->symbol, "┌");
-    (terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c)->color = rectangle.tile.color;
-    (terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c)->bg_color = rectangle.tile.bg_color;
-    
-    strcpy((terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c + rectangle.w - 1)->symbol, "┐");
-    (terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c + rectangle.w - 1)->color = rectangle.tile.color;
-    (terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c + rectangle.w - 1)->bg_color = rectangle.tile.bg_color;
+    set_frame_tile(terminal, rectangle.r, rectangle.c,
+                   "┌", rectangle.tile.color, rectangle.tile.bg_color);
 
-    strcpy((terminal->term_frame + ((rectangle.r + rectangle.h - 1)*terminal->ncols) + rectangle.c)->symbol, "└");
-    (terminal->term_frame + ((rectangle.r + rectangle.h - 1)*terminal->ncols) + rectangle.c)->color = rectangle.tile.color;
-    (terminal->term_frame + ((rectangle.r + rectangle.h - 1)*terminal->ncols) + rectangle.c)->bg_color = rectangle.tile.bg_color;
+    set_frame_tile(terminal, rectangle.r,
+                   rectangle.c + rectangle.w - 1,
+                   "┐", rectangle.tile.color, rectangle.tile.bg_color);
 
-    strcpy((terminal->term_frame + ((rectangle.r + rectangle.h - 1)*terminal->ncols) + rectangle.c + rectangle.w - 1)->symbol, "┘");
-    (terminal->term_frame + ((rectangle.r + rectangle.h - 1)*terminal->ncols) + rectangle.c + rectangle.w - 1)->color = rectangle.tile.color;
-    (terminal->term_frame + ((rectangle.r + rectangle.h - 1)*terminal->ncols) + rectangle.c + rectangle.w - 1)->bg_color = rectangle.tile.bg_color;
+    set_frame_tile(terminal,
+                   rectangle.r + rectangle.h - 1,
+                   rectangle.c,
+                   "└", rectangle.tile.color, rectangle.tile.bg_color);
+
+    set_frame_tile(terminal,
+                   rectangle.r + rectangle.h - 1,
+                   rectangle.c + rectangle.w - 1,
+                   "┘", rectangle.tile.color, rectangle.tile.bg_color);
 
     for(i=1;i<rectangle.w-1;i++){
-        strcpy((terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c + i)->symbol, "─");
-        (terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c + i)->color = rectangle.tile.color;
-        (terminal->term_frame + (rectangle.r*terminal->ncols) + rectangle.c + i)->bg_color = rectangle.tile.bg_color;
-        strcpy((terminal->term_frame + ((rectangle.r+rectangle.h - 1)*terminal->ncols) + rectangle.c + i)->symbol, "─");
-        (terminal->term_frame + ((rectangle.r+rectangle.h - 1)*terminal->ncols) + rectangle.c + i)->color = rectangle.tile.color;
-        (terminal->term_frame + ((rectangle.r+rectangle.h - 1)*terminal->ncols) + rectangle.c + i)->bg_color = rectangle.tile.bg_color;
+        set_frame_tile(terminal,
+                       rectangle.r,
+                       rectangle.c + i,
+                       "─", rectangle.tile.color, rectangle.tile.bg_color);
+
+        set_frame_tile(terminal,
+                       rectangle.r + rectangle.h - 1,
+                       rectangle.c + i,
+                       "─", rectangle.tile.color, rectangle.tile.bg_color);
     }
     for(i=1;i<rectangle.h-1;i++){
-        strcpy((terminal->term_frame + ((rectangle.r+i)*terminal->ncols) + rectangle.c)->symbol, "│");
-        (terminal->term_frame + ((rectangle.r+i)*terminal->ncols) + rectangle.c)->color = rectangle.tile.color;
-        (terminal->term_frame + ((rectangle.r+i)*terminal->ncols) + rectangle.c)->bg_color = rectangle.tile.bg_color;
-        strcpy((terminal->term_frame + ((rectangle.r+i)*terminal->ncols) + rectangle.c + rectangle.w - 1)->symbol, "│");
-        (terminal->term_frame + ((rectangle.r+i)*terminal->ncols) + rectangle.c + rectangle.w - 1)->color = rectangle.tile.color;
-        (terminal->term_frame + ((rectangle.r+i)*terminal->ncols) + rectangle.c + rectangle.w - 1)->bg_color = rectangle.tile.bg_color;
+        set_frame_tile(terminal,
+                       rectangle.r + i,
+                       rectangle.c,
+                       "│", rectangle.tile.color, rectangle.tile.bg_color);
+
+        set_frame_tile(terminal,
+                       rectangle.r + i,
+                       rectangle.c + rectangle.w - 1,
+                       "│", rectangle.tile.color, rectangle.tile.bg_color);
     }
 
 }
@@ -352,6 +386,93 @@ void frame_resize(void){
         
     }
 }
+
+void set_frame_width(int value){
+    tframe_t *frame = selected_frame;
+    
+    if(frame->con.max_w){
+        if(value<frame->con.max_w && value >= frame->con.min_w){
+            frame->dim.w = value;
+        }else{
+        if(value < frame->con.min_w){
+            frame->dim.w = frame->con.min_w;
+        }else{
+            frame->dim.w = frame->con.max_w;
+        }
+        }
+    }else{
+        if(value >= frame->con.min_w){
+            frame->dim.w = value;
+        }else{
+            frame->dim.w = frame->con.min_w;
+        }
+    }
+}
+void set_frame_heigth(int value){
+    tframe_t *frame = selected_frame;
+
+    if(value >= frame->con.min_h){
+        frame->dim.h = value;
+    }else{
+        frame->dim.h = frame->con.min_h;
+    }
+    if(frame->con.max_h){
+        if(value<frame->con.max_h){
+            frame->dim.h = value;
+        }else{
+            frame->dim.h = frame->con.max_h;
+        }
+    }
+}
+void set_frame_max_width(int value){
+    tframe_t *frame = selected_frame;
+    frame->con.max_w = value;
+}
+void set_frame_min_width(int value){
+    tframe_t *frame = selected_frame;
+    if(value>=0){
+        frame->con.min_w = value;
+    }
+}
+void set_frame_max_heigth(int value){
+    tframe_t *frame = selected_frame;
+    frame->con.max_h = value;
+
+}
+void set_frame_min_heigth(int value){
+    tframe_t *frame = selected_frame;
+    if(value>=0){
+        frame->con.min_h = value;
+    }
+}
+
+
+
+
+int init_tframe(tframe_t *frame){
+    if(!frame) return 1;
+
+    frame->set.h = set_frame_heigth;
+    frame->set.w = set_frame_width;
+    frame->set.max_h = set_frame_max_heigth;
+    frame->set.max_w = set_frame_max_width;
+    frame->set.min_h = set_frame_min_heigth;
+    frame->set.min_w = set_frame_min_width;
+    frame->con.max_h = 0;
+    frame->con.max_w = 0;
+    frame->dim.r = 0;
+    frame->dim.c = 0;
+    frame->dim.w = 0;
+    frame->dim.h = 0;
+    frame->dim.tile.bg_color = GCS_BG_DEFAULT;
+    frame->dim.tile.bg_color = GCS_DEFAULT;
+    strcpy(frame->dim.tile.symbol,"X");
+
+    selected_frame = frame;
+
+    return 0;
+}
+
 
 int init_tui(term_w_t *terminal){
     if(!terminal) return 1;

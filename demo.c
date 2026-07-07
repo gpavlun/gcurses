@@ -43,38 +43,45 @@ int main(void) {
 
     int selected = 0;
 
+    
+    tframe_t title_box;
+    init_tframe(&title_box);
+    
+    title_box.set.max_w(strlen("GCURSES DEMO")*2 + 2);
+    title_box.set.min_w(strlen("GCURSES DEMO") + 2);
+
+    title_box.set.h(3);
+    title_box.dim.tile.color = GCS_BLUE;
+
     while(input!='q'&&input!='\e'){
         terminal.frame_resize();
 
         handleinput(input, &selected);
         
-        rect_t title_box;
-        title_box.c = 0;
-        title_box.r = 0;
-        title_box.h = 3;
-        title_box.w = terminal.ncols/4;
-        title_box.tile.color = GCS_BLUE;
-        title_box.tile.bg_color = GCS_BG_DEFAULT;
 
-        terminal.draw_frame(title_box);
+        select_frame(&title_box);
+        title_box.set.w(terminal.ncols/4);
+        
 
-        terminal.horz_strdisp(title_box.r+1, title_box.c+1, "GCURSES DEMO");
+        terminal.draw_frame(title_box.dim);
+
+        terminal.horz_strdisp(title_box.dim.r+1, title_box.dim.c+1, "GCURSES DEMO");
         
         rect_t body_box;
-        body_box.c = title_box.c;
-        body_box.r = title_box.r+title_box.h;
-        body_box.h = terminal.nrows-title_box.h;
-        body_box.w = terminal.ncols/4;
+        body_box.c = title_box.dim.c;
+        body_box.r = title_box.dim.r+title_box.dim.h;
+        body_box.h = terminal.nrows-title_box.dim.h;
+        body_box.w = title_box.dim.w;
         body_box.tile.color = GCS_RED;
         body_box.tile.bg_color = GCS_BG_DEFAULT;
 
         terminal.draw_frame(body_box);
 
         rect_t ui_box;
-        ui_box.c = title_box.c+title_box.w;
-        ui_box.r = title_box.r;
+        ui_box.c = title_box.dim.c+title_box.dim.w;
+        ui_box.r = title_box.dim.r;
         ui_box.h = terminal.nrows;
-        ui_box.w = terminal.ncols*3/4;
+        ui_box.w = terminal.ncols-title_box.dim.w;
         ui_box.tile.color = GCS_GREEN;
         ui_box.tile.bg_color = GCS_BG_DEFAULT;
 
@@ -83,7 +90,9 @@ int main(void) {
         terminal.horz_strdisp(ui_box.r+1,ui_box.c+1,"This is a demo of gcurses, my implementation of ncurses.");
         //terminal.vert_strdisp(body_box.r+2,body_box.c+body_box.w/2,"Vertical string");
         terminal.horz_strdisp(ui_box.r+2,ui_box.c+1,"Dynamic resizing is enabled, try moving the window around!");
-        terminal.horz_strdisp(ui_box.r+3,ui_box.c+1,"Press q or esc to exit.");
+        terminal.horz_strdisp(ui_box.r+3,ui_box.c+1,"There are also min and max widths, see the title box!");
+        
+        terminal.horz_strdisp(ui_box.r+6,ui_box.c+1,"Press q or esc to exit.");
 
         
         tile_t array[6][16] = {0};
@@ -121,7 +130,8 @@ int main(void) {
         for(int i=0;i<6;i++){
             terminal.horz_tiledisp(body_box.r+1+i,body_box.c+1,array[i]);
         }
-        
+
+
 
 
         terminal.present();
