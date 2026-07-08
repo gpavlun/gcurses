@@ -56,24 +56,17 @@ dog_method_t make_method(dog_t *dog)
 }
 
 void main(void){
-    dog_t dog = {0};
+    dog_t dog1 = {0};
+    dog_t dog2 = {0};
 
-    dog.sit = make_method(&dog);
+    dog1.sit = make_method(&dog1);
+    dog2.sit = make_method(&dog2);
 
-    dog.sit();
+    dog1.sit();
 
-    printf("%d\n", dog.sitting);
+    printf("%d\n", dog1.sitting);
+    printf("%d\n", dog2.sitting);
 
-    dog.sit();
 
-    printf("%d\n", dog.sitting);
-    
-    dog.sit();
-
-    printf("%d\n", dog.sitting);
-
-    dog.sit();
-
-    printf("%d\n", dog.sitting);
 
 }
