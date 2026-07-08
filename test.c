@@ -10,24 +10,33 @@ typedef struct {
     void (*sit)(void);
 } dog_t;
 
-__attribute__((noinline))
-void sit_template(void)
-{
-    dog_t *dog = (dog_t *)0x1234567812345678ULL;
-    dog->sitting = !dog->sitting;
-}
+typedef struct {
+    void *start;
+    size_t size;
+} method_meta_t;
 
-void sit_template_end(void)
-{
-}
+#define def_method(name, def) \
+__attribute__((noinline)) \
+def \
+void name##_end(void){}
 
-typedef void (*dog_method_t)(void);
 
-dog_method_t make_method(dog_t *dog)
+def_method(sit_template, 
+    void sit_template(void){
+        dog_t *dog = (dog_t *)0x1234567812345678ULL;
+        dog->sitting = !dog->sitting;
+    }
+)
+
+
+#define bind_method(caller, name)\
+make_method(caller, name, (size_t)((char *)name##_end - (char *)name) )
+
+
+typedef void (*method_t)(void);
+
+method_t make_method(void *caller, void *function, size_t size)
 {
-    size_t size =
-        (uintptr_t)sit_template_end -
-        (uintptr_t)sit_template;
 
     unsigned char *code = mmap(
         NULL,
@@ -38,10 +47,10 @@ dog_method_t make_method(dog_t *dog)
         0
     );
 
-    memcpy(code, sit_template, size);
+    memcpy(code, function, size);
 
     uint64_t needle = 0x1234567812345678ULL;
-    uint64_t replacement = (uint64_t)dog;
+    uint64_t replacement = (uint64_t)caller;
 
     for (size_t i = 0; i < size - sizeof(uint64_t); i++) {
         uint64_t *p = (uint64_t *)(code + i);
@@ -52,21 +61,19 @@ dog_method_t make_method(dog_t *dog)
         }
     }
 
-    return (dog_method_t)code;
+    return (method_t)code;
 }
 
 void main(void){
     dog_t dog1 = {0};
     dog_t dog2 = {0};
 
-    dog1.sit = make_method(&dog1);
-    dog2.sit = make_method(&dog2);
+    dog1.sit = bind_method(&dog1, sit_template);
+    dog2.sit = bind_method(&dog2, sit_template);
 
     dog1.sit();
 
     printf("%d\n", dog1.sitting);
     printf("%d\n", dog2.sitting);
-
-
 
 }
