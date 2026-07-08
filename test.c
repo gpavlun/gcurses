@@ -9,18 +9,20 @@
 #define def_method(name) \
 __attribute__((noinline)) \
 void GGG_##name##_method_wrapper(void){\
-    void *caller = (void *)magic_needle;\
-    name(caller);\
+    void *caller        = (void *)magic_call_needle;\
+    void (* fn)(void *) = (void *)magic_func_needle;\
+    fn(caller);\
 }\
 void GGG_##name##_end(void){}
 
 #define bind_method(caller, name)\
-make_method(caller, GGG_##name##_method_wrapper, (size_t)((char *)GGG_##name##_end - (char *)GGG_##name##_method_wrapper) )
+make_method(caller, name, GGG_##name##_method_wrapper, (size_t)((char *)GGG_##name##_end - (char *)GGG_##name##_method_wrapper) )
 
 
 
 
-#define magic_needle 0x1234567812345678ULL
+#define magic_call_needle 0x1234567812345678ULL
+#define magic_func_needle 0x8765432187654321ULL
 #define METHOD_PAGE_SIZE 4096
 
 typedef struct {
@@ -89,20 +91,20 @@ void *method_alloc(size_t size){
 
 
 typedef void (*method_t)(void);
-method_t make_method(void *caller, void *function, size_t size){
+method_t make_method(void *caller, void *function, void *wrapper, size_t size){
 
     unsigned char *code = method_alloc(size);
-    memcpy(code, function, size);
+    memcpy(code, wrapper, size);
     uint64_t replacement = (uint64_t)caller;
 
     for(size_t i = 0; i <= size - sizeof(uint64_t); i++){
         uint64_t *p = (uint64_t *)(code + i);
 
-        if(*p == magic_needle){
-            *p = replacement;
-            break;
+        if(*p == magic_call_needle){
+            *p = (uint64_t)replacement;
+        }else if (*p == magic_func_needle)
+            *p = (uint64_t)function;
         }
-    }
 
     return (method_t)code;
 }
@@ -110,53 +112,58 @@ method_t make_method(void *caller, void *function, size_t size){
 
 
 typedef struct dog_data{
+    char name[16];
     int sitting;
     void (*sit)(void);
+    void (*stand)(void);
+    void (*stats)(void);
 } dog_t;
 
-void sit(dog_t *self);
-
+void sit  (dog_t *self);
+void stand(dog_t *self);
+void stats(dog_t *self);
 
 def_method(sit)
 void sit(dog_t *self){
-    self->sitting++;
+    self->sitting = 1;
 }
 
-
-#define DOG_COUNT 100000
-
-void test_dogs(void)
-{
-    dog_t *dogs = malloc(sizeof(dog_t) * DOG_COUNT);
-
-    if (!dogs) {
-        perror("malloc");
-        exit(1);
-    }
-
-    for (size_t i = 0; i < DOG_COUNT; i++)
-    {
-        dogs[i].sitting = 0;
-        dogs[i].sit = bind_method(&dogs[i], sit);
-    }
-
-    // poke a few of them to verify they work
-    for (size_t i = 0; i < DOG_COUNT; i++)
-    {
-        dogs[i].sit();
-    }
-
-    printf("dog[0]: %d\n", dogs[0].sitting);
-    printf("dog[last]: %d\n", dogs[DOG_COUNT - 1].sitting);
-
-
-    free(dogs);
+def_method(stand)
+void stand(dog_t *self){
+    self->sitting = 0;
 }
 
+def_method(stats)
+void stats(dog_t *self){
+    puts("dog status:");
+    printf("name:\t%s\n",self->name);
+    printf("state:\t%s\n\n",self->sitting?"sitting":"standing");
+}
+
+void construct_dog(dog_t *dog){
+    dog->sit   = bind_method(dog, sit);
+    dog->stand = bind_method(dog, stand);
+    dog->stats = bind_method(dog, stats);
+}
 
 void main(void){
 
-    test_dogs();
+    dog_t dog1 = {0};
+    construct_dog(&dog1);
+
+    dog_t dog2 = {0};
+    construct_dog(&dog2);
+
+    strcpy(dog1.name, "rover");
+    strcpy(dog2.name, "fido");
+
+    dog1.stats();
+    dog2.stats();
+    
+    dog1.sit();
+
+    dog1.stats();
+    dog2.stats();
 
     sleep(50);
 
