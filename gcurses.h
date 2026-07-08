@@ -119,7 +119,8 @@ typedef struct term_frame_set{
     void (*max_w)(int value);
     void (*max_h)(int value);
     void (*min_w)(int value);
-    void (*min_h)(int value);  
+    void (*min_h)(int value);
+    
 }tframe_set_t;
 typedef struct term_frame_constraints{
     int max_w;
@@ -131,6 +132,7 @@ typedef struct term_frame_data{
     rect_t dim;
     tframe_set_t set;
     tframe_con_t con;
+    void (*max_zz)(int value);
 }tframe_t;
 
 
@@ -138,6 +140,7 @@ typedef struct term_frame_data{
 typedef struct term_window{
     int nrows;
     int ncols;
+    term_w_t *self;
     tile_t *term_frame;
     tile_t *prev_frame;
     void (*clear)(void);
@@ -150,7 +153,7 @@ typedef struct term_window{
     int (*vert_tiledisp)(int r, int c, tile_t *src);
     void (*draw_rect)(rect_t rect);
     void (*draw_border)(rect_t rect);
-    void (*draw_frame)(rect_t rect);
+    void (*term_draw_frame)(term_w_t *terminal, rect_t rect);
     void (*frame_resize)(void);
 
     struct termios old_conf;
@@ -159,6 +162,14 @@ typedef struct term_window{
 }term_w_t;
 
 extern term_w_t *selected_term;
+
+
+#define draw_frame(A)\
+term_draw_farme()
+
+
+
+
 
 void select_term(term_w_t *terminal);
 int io_blocking_handler(int setting);
