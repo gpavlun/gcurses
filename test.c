@@ -6,17 +6,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#define def_method(name) \
-__attribute__((noinline)) \
-void GGG_##name##_method_wrapper(void){\
-    void *caller        = (void *)magic_call_needle;\
-    void (* fn)(void *) = (void *)magic_func_needle;\
-    fn(caller);\
-}\
-void GGG_##name##_end(void){}
-
-#define bind_method(caller, name)\
-make_method(caller, name, GGG_##name##_method_wrapper, (size_t)((char *)GGG_##name##_end - (char *)GGG_##name##_method_wrapper) )
 
 
 
@@ -109,41 +98,125 @@ method_t make_method(void *caller, void *function, void *wrapper, size_t size){
     return (method_t)code;
 }
 
+typedef void (*action_t)(void);
+void *make_action(void *caller, void *function, void *wrapper, size_t size){
+
+    unsigned char *code = method_alloc(size);
+    memcpy(code, wrapper, size);
+    uint64_t replacement = (uint64_t)caller;
+
+    for(size_t i = 0; i <= size - sizeof(uint64_t); i++){
+        uint64_t *p = (uint64_t *)(code + i);
+
+        if(*p == magic_call_needle){
+            *p = (uint64_t)replacement;
+        }else if (*p == magic_func_needle)
+            *p = (uint64_t)function;
+        }
+
+    return code;
+}
+
+
+
+#define bind_method(caller, name)                             \
+make_method(                                                   \
+    caller,                                                    \
+    name,                                                      \
+    GGG_##name##_method_wrapper,                               \
+    ((size_t)((unsigned char *)GGG_##name##_method_wrapper_end -\
+              (unsigned char *)GGG_##name##_method_wrapper))   \
+)
+#define bind_action(caller, name)                             \
+make_action(                                                   \
+    caller,                                                    \
+    name,                                                      \
+    GGG_##name##_method_wrapper,                               \
+    ((size_t)((unsigned char *)GGG_##name##_method_wrapper_end -\
+              (unsigned char *)GGG_##name##_method_wrapper))   \
+)
+
+
+
+
+#define def_action(name)\
+__attribute__((noinline,used))                                \
+void GGG_##name##_method_wrapper(void)               \
+{                                                             \
+    void *caller = (void *)magic_call_needle;                 \
+    void (*fn)(void *) =                              \
+                (void (*)(void *))magic_func_needle;  \
+    fn(caller);                                   \
+}                                                             \
+__asm__(                                                      \
+    ".global GGG_" #name "_method_wrapper_end\n"              \
+    "GGG_" #name "_method_wrapper_end:\n"                     \
+);\
+extern unsigned char GGG_##name##_method_wrapper_end[];
+
+
+#define def_method(name, argtype)\
+__attribute__((noinline,used))                                \
+void GGG_##name##_method_wrapper(argtype arg)               \
+{                                                             \
+    void *caller = (void *)magic_call_needle;                 \
+    void (*fn)(void *, argtype) =                              \
+                (void (*)(void *, argtype))magic_func_needle;  \
+    fn(caller, arg);                                   \
+}                                                             \
+__asm__(                                                      \
+    ".global GGG_" #name "_method_wrapper_end\n"              \
+    "GGG_" #name "_method_wrapper_end:\n"                     \
+);\
+extern unsigned char GGG_##name##_method_wrapper_end[];
+
+
+
 
 
 typedef struct dog_data{
     char name[16];
     int sitting;
+
     void (*sit)(void);
     void (*stand)(void);
     void (*stats)(void);
+    void (*rename)(char *);
 } dog_t;
 
 void sit  (dog_t *self);
 void stand(dog_t *self);
 void stats(dog_t *self);
+void set_name(dog_t *self, char *name);
 
-def_method(sit)
+def_action(sit)
 void sit(dog_t *self){
     self->sitting = 1;
 }
 
-def_method(stand)
+def_action(stand)
 void stand(dog_t *self){
     self->sitting = 0;
 }
 
-def_method(stats)
+def_action(stats)
 void stats(dog_t *self){
-    puts("dog status:");
+    puts("-dog status-");
     printf("name:\t%s\n",self->name);
     printf("state:\t%s\n\n",self->sitting?"sitting":"standing");
 }
 
+def_method(set_name, char *)
+void set_name(dog_t *self, char *name){
+    strcpy(self->name, name);
+}
+
+
 void construct_dog(dog_t *dog){
-    dog->sit   = bind_method(dog, sit);
-    dog->stand = bind_method(dog, stand);
-    dog->stats = bind_method(dog, stats);
+    dog->sit   = bind_action(dog, sit);
+    dog->stand = bind_action(dog, stand);
+    dog->stats = bind_action(dog, stats);
+    dog->rename = bind_method(dog, set_name);
 }
 
 void main(void){
@@ -154,8 +227,11 @@ void main(void){
     dog_t dog2 = {0};
     construct_dog(&dog2);
 
-    strcpy(dog1.name, "rover");
-    strcpy(dog2.name, "fido");
+    dog1.stats();
+    dog2.stats();
+
+    dog1.rename("rover");
+    dog2.rename("fido");
 
     dog1.stats();
     dog2.stats();
